@@ -15,18 +15,18 @@ class naivebayes:
         self._log_prob = None
         self._epsilon = epsilon
 
-    def _check_input(self, X, y):
+    def _check_Xy(self, X, y):
         """ Some input checking logic
         """
-        X = np.array(X)
-        y = np.array(y)
-        assert X.shape[0] == y.shape[0]
+        X, y = np.array(X, dtype=np.float64), np.array(y, dtype=np.int64)
+        assert X.shape[0] == y.shape[0] and len(y.shape) == 1, "Accepcted input dimesions: X ~ [m, d], y ~ [m, ]"
         return X, y
 
     def fit(self, X, y):
         """ Fit X, y dataset pair
         """
-        self._class = np.sort(list(set(y)))
+        X, y = self._check_Xy(X, y)
+        self._class = np.sort(np.unique(y))
         m, d = X.shape
         k = len(self._class)
         self._mean = np.zeros((d, k))
@@ -70,15 +70,15 @@ class naivebayes:
 
 
 if __name__ == "__main__":
-    test = naivebayes()
+    nb_model = naivebayes()
+    # X = np.vstack((np.random.rand(2, 1) + 10, np.random.rand(2, 1) * 3))
+    # y = np.array([1, 1, 2, 2])
+    np.random.seed(9)
+    # create dummy dataset
+    X = np.concatenate((np.random.rand(50, 1) + 10,
+                        np.random.rand(50, 1) + 5), axis=0)
+    y = np.concatenate((np.ones(50), np.zeros(50)), axis=0)
+    nb_model.fit(X, y)
+    y_pred = nb_model.predict(X)
+    print("Accuracy = %f" % (np.sum(y_pred == y) / len(y)))
 
-    X = np.vstack((np.random.rand(2, 1) + 10, np.random.rand(2, 1) * 3))
-    y = np.array([1, 1, 2, 2])
-    test.fit(X, y)
-    print(X)
-    # print("Mean:", test._mean)
-    # print("Var:", test._var)
-    y_pred = test.predict(X)
-    print(test.predict_prob(X))
-    print(test._log_prob)
-    print(y_pred, y)
