@@ -50,12 +50,11 @@ class naivebayes:
                                     np.power(X[:, :, np.newaxis] - self._mean, 2) / self._var, axis=1)
         return log_prior + log_normal
 
-    def predict_prob(self, X):
+    def _predict_prob(self, X):
         """ return probabilities of each class given dataset X
         """
         self._log_prob = self._get_log_prob(X)
         probs = np.exp(self._log_prob)
-        probs /= np.sum(probs, axis=1, keepdims=True)
         return probs
 
     def predict(self, X):

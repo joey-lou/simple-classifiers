@@ -1,8 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
-# TODO: add ovr
-
 class logisticbase(ABC):
     @abstractmethod
     def fit(self, X, y):
@@ -46,14 +44,20 @@ class binarylogistic(logisticbase):
         self._b = None
         self.__fit = False
 
+    @staticmethod
+    def _check_binary(y):
+        assert set([0, 1]) == set(np.unique(y)), \
+            "binary classification only takes in class labels of 0 and 1"
+
     def fit(self, X, y, *, Val_Xy=None, alpha=1e-1, decay=0.99, max_epoch=100, batch_size=32, epsilon=1e-8, flag=0):
         X, y = self._check_Xy(X, y)
         
         if Val_Xy:
-            flag = 2
-            X_val, y_val = Val_Xy
+            X_val, y_val = self._check_Xy(*Val_Xy)
             assert X_val.shape[0] == y_val.shape[0], "Validation set dimension mismatch"
+            self._check_binary(y_val)
 
+        self._check_binary(y)
         m, d = X.shape
         # check literature for better intialization scheme, though
         # cross_entropy is convex
@@ -70,15 +74,13 @@ class binarylogistic(logisticbase):
                 
                 w -= alpha * w_grad
                 b -= alpha * b_grad
-                if flag == 1:
+                if flag:
                     print("Epoch %i [%i/%i]: Batch Loss: %f" %
                         (i + 1, j + 1, b_num, self._cross_entropy_loss(Xb, yb, w, b)))
-                elif flag == 2:
-                    print("Epoch %i [%i/%i]: Batch Loss: %f, Validation Loss: %f" %
-                        (i + 1, j + 1, b_num, self._cross_entropy_loss(Xb, yb, w, b), self._cross_entropy_loss(X_val, y_val, w, b)))
+            
             alpha *= decay
             train_loss = self._cross_entropy_loss(X, y, w, b)
-            if flag:
+            if Val_Xy:
                 print("Epoch %i: Validation Loss: %f" % (i + 1, self._cross_entropy_loss(X_val, y_val, w, b)))
             # early stop if loss stops decreasing
             if np.abs(prev_train - train_loss) < epsilon:
@@ -96,9 +98,13 @@ class binarylogistic(logisticbase):
     def _sigmoid(self, Z):
         return 1 / (1 + np.exp(-Z))
 
-    def predict(self, X):
+    def _predict_prob(self, X):
         assert self.__fit, "No training data fitted yet"
         prob = self._sigmoid(X @ self._w + self._b)
+        return prob
+
+    def predict(self, X):
+        prob = self._predict_prob(X)
         return (prob > 0.5) * 1
   
 
@@ -115,8 +121,8 @@ class multinormlogsitic(logisticbase):
         y = self.one_hot_encode(y, self._class)
         
         if Val_Xy:
-            flag = 2
             X_val, y_val = Val_Xy
+            y_val = self.one_hot_encode(y_val, self._class)
             assert X_val.shape[0] == y_val.shape[0], "Validation set dimension mismatch"
 
         m, d = X.shape
@@ -136,15 +142,12 @@ class multinormlogsitic(logisticbase):
                 
                 w -= alpha * w_grad
                 b -= alpha * b_grad
-                if flag == 1:
+                if flag:
                     print("Epoch %i [%i/%i]: Batch Loss: %f" %
                         (i + 1, j + 1, b_num, self._cross_entropy_loss(Xb, yb, w, b)))
-                elif flag == 2:
-                    print("Epoch %i [%i/%i]: Batch Loss: %f, Validation Loss: %f" %
-                        (i + 1, j + 1, b_num, self._cross_entropy_loss(Xb, yb, w, b), self._cross_entropy_loss(X_val, y_val, w, b)))
             alpha *= decay
             train_loss = self._cross_entropy_loss(X, y, w, b)
-            if flag:
+            if Val_Xy:
                 print("Epoch %i: Validation Loss: %f" % (i + 1, self._cross_entropy_loss(X_val, y_val, w, b)))
             # early stop if loss stops decreasing
             if np.abs(prev_train - train_loss) < epsilon:
@@ -155,10 +158,14 @@ class multinormlogsitic(logisticbase):
         self._b = b
         self.__fit = True
 
-    def predict(self, X):
+    def _predict_prob(self, X):
         assert self.__fit, "No training data fitted yet"
         prob = self._soft_max(X @ self._w + self._b)
-        return self._class[np.argmax(prob, axis=1)]
+        return prob
+
+    def predict(self, X):
+        probs = self._predict_prob(X)
+        return self._class[np.argmax(probs, axis=1)]
 
     def _soft_max(self, Z):
         """ Z has dimension [m, k]
@@ -170,34 +177,66 @@ class multinormlogsitic(logisticbase):
         p = self._soft_max(X @ w + b)
         return - np.sum(y * np.log(p)) / X.shape[0]
 
-
-
-class multiclasslogistic(logisticbase):
-    def __init__(self, scheme="multinorm"):
+class ovrlogistic(logisticbase):
+    def __init__(self,):
         self._models = []
-        self._classes = []
         self.__fit = False
-        self.scheme = scheme
-
-        if self.scheme == "multinorm":
-            self._models = multinormlogsitic()
+        self._class = None
+        
+    def fit(self, X, y, *, Val_Xy=None, alpha=1e-1, decay=0.99, max_epoch=100, batch_size=32, epsilon=1e-8, flag=0):
+        # 'ovr' scheme
+        X, y = self._check_Xy(X, y)
+        self._class = np.sort(np.unique(y))
+        Val_Xy_ = None
+        for i, class_ in enumerate(self._class):
+            model = binarylogistic()
+            if flag: print("Training Model %i" % i)
+            if Val_Xy:
+                Val_Xy_ = (Val_Xy[0], (Val_Xy[1] == class_) * 1)
+            y_ = (y == class_) * 1
+            model.fit(X, y_, Val_Xy=Val_Xy_, alpha=alpha, decay=decay, max_epoch=max_epoch,
+                                        batch_size=batch_size, epsilon=epsilon, flag=flag)
+            self._models.append(model)
+        self.__fit = True
+    
+    def _predict_prob(self, X):
+        """ Generate 
+        """
+        assert self.__fit, "No training data fitted yet"
+        y_probs = []
+        for i, class_ in enumerate(self._class):
+            y_probs.append(self._models[i]._predict_prob(X) )
+        y_probs = np.stack(y_probs, axis=-1)
+        return y_probs
 
     def predict(self, X):
-        if self.scheme == "multinorm":
-            return self._models.predict(X)
-    
-    def fit(self, X, y):
-        if self.scheme == "multinorm":
-            self._models.fit(X, y)
+        probs = self._predict_prob(X)
+        return self._class[np.argmax(probs, axis=1)]
+
+class multiclasslogistic:
+    def __new__(self, scheme="multinorm"):
+        if scheme == "multinorm":
+            return multinormlogsitic()
+        elif scheme == "ovr":
+            return ovrlogistic()
+        elif scheme == 'binary':
+            return binarylogistic()
+        else:
+            raise ValueError("Scheme '%s' not supported, choose from 'binary', 'mutinorm' or 'ovr'" % scheme)
+
 
 if __name__ == "__main__":
-    lg_model = multiclasslogistic()
+
+    lg_model = multiclasslogistic(scheme="binary")
     np.random.seed(9)
     # create dummy dataset
-    X = np.concatenate((np.random.rand(50, 1) + 10,
-                        np.random.rand(50, 1) + 5), axis=0)
-    y = np.concatenate((np.ones(50), np.zeros(50)), axis=0)
+    X = np.concatenate((np.random.rand(50, 2) + 10,
+                        np.random.rand(50, 2) + 5), axis=0)
+    y = np.concatenate((np.ones(50)*1, np.ones(50)*0), axis=0)
+    X_val = np.random.rand(20, 2) + 8
+    y_val = np.ones(20)
 
-    lg_model.fit(X, y)
+    lg_model.fit(X, y, flag=0)
+
     y_pred = lg_model.predict(X)
     print("Accuracy = %f" % (np.sum(y_pred == y) / len(y)))
