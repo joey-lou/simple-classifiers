@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 class logisticbase(ABC):
     @abstractmethod
     def fit(self, X, y):
-        pass
+        """ fit model given training X, y data pair """
 
     @abstractmethod
     def predict(self, X):
-        pass
+        """ predict model output given X """
 
     def _check_Xy(self, X, y):
         X, y = np.array(X, dtype=np.float64), np.array(y, dtype=np.int64)
@@ -207,7 +207,7 @@ class ovrlogistic(logisticbase):
         for i, class_ in enumerate(self._class):
             y_probs.append(self._models[i]._predict_prob(X) )
         y_probs = np.stack(y_probs, axis=-1)
-        return y_probs
+        return y_probs / np.sum(y_probs, axis=1, keepdims=True)
 
     def predict(self, X):
         probs = self._predict_prob(X)

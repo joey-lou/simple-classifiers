@@ -55,7 +55,8 @@ class naivebayes:
         """
         self._log_prob = self._get_log_prob(X)
         probs = np.exp(self._log_prob)
-        return probs
+        # do not normalize to better show gaussian distribution
+        return probs # / np.sum(probs, axis=1, keepdims=True)
 
     def predict(self, X):
         """predict labels given sample dataset X
