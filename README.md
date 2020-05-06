@@ -3,15 +3,18 @@
 Another implementation exercise on writing common ML packages. Here I implmented two commonly used classifiers, namely naive bayes and logistic regression for multi-class classification problems.
 
 ## Set-up
+***
 To use this package, only numpy is required. If not installed run: `pip install numpy` in terminal.
 
 To run comparisons with Scikit-learn in sample_test.ipynb, the corresponding package is required. If not yet installed, run `pip install -U scikit-learn` in terminal.
 
-## How-to-use
+## How-to-use 
+***
+
 ### Naive Bayes
 The interfaces is shown as follows: 
 ```python
-class naivebayes.NaiveBayes(model="gaussian", epsilon=1e-8)
+class naivebayes.NaiveBayes(model="gaussian", epsilon=1e-8):
 ```
 
 #### Tunable parameters include:
@@ -23,50 +26,50 @@ class naivebayes.NaiveBayes(model="gaussian", epsilon=1e-8)
   - `X` is numpy array of shape [ n_samples x n_features ].
   - `y` is numpy array of shape [ n_samples ].
 - `predict(self, X)`, predicts labels given dataset `X`.
-  - `X` is numpy array of shape [ n_samples x n_features ]
+  - `X` is numpy array of shape [ n_samples x n_features ].
 - `_predict_prob(self, X)`, predicts probabilities associated with each label given dataset `X`.
-  - `X` is numpy array of shape [ n_samples x n_features ]
+  - `X` is numpy array of shape [ n_samples x n_features ].
 
 ### Logistic Regression
 Binary logistic regression uses cross entroy loss and is solved iteratively via stochastic gradient descent.
 Multi-class can use either `ovr` or `multinomial`.
 
-#### Tunable parameters include:
-- `feature_count: integer, optional (default=1)`, number of subset features selected.
-- `feature_count: integer, optional (default=1)`, number of subset features selected.
-
-
 The interfaces are shown as follows: 
 ```python
-class naivebayes.NaiveBayes(model="gaussian", epsilon=1e-8)
-
-class regression.MulticlassLogisitc(scheme="multinomial")
-
-class regression.BinaryLogistic()
+class regression.MulticlassLogisitc(scheme="multinomial"):
 ```
 
 ### Tunable parameters include:
-- `feature_count: integer, optional (default=1)`, number of subset features selected.
-- `tree_num: integer, optional (default=10)`, number of decision trees to use in forest.
-- `depth: integer, optional (default=10)`, maximum depth of each decision tree.
-- `min_improv: float, optional (default=1e-8)`, minimum improvement in gini impurity/entropy required to split a node further.
-- `eval_func: string, optional (default="gini_impurity")`, evaluation criteria, either gini impurity `"gini_impurity"` or entropy `"entropy"`.
+- `scheme: string, optional (default=multinomial)`, scheme used for logistic regression, possible choices include `multinomial`, `ovr` or `binary`, note `binary` is only suited for class number of 2.
 
 ### Methods:
-- `fit(self, X, y)`, fits random forest of trees from training set `(X, y)`:
+- `fit(self, X, y, *, Val_Xy=None, alpha=1e-1, decay=0.99, max_epoch=100, batch_size=32, epsilon=1e-8, flag=0)`, fits logistic model from training set `(X, y)`:
   - `X` is numpy array of shape [ n_samples x n_features ].
   - `y` is numpy array of shape [ n_samples ].
-- `predict(self, X, rule="prob")`, predicts labels given dataset `X` and prediction rule.
-  - `X` is numpy array of shape [ n_samples x n_features ]
-  - `rule, optional (default="prob")` can also be `"majority"` whereby prediction is based on majority ruling from each decision trees.
+  - `Val_Xy, optional, (default=None)` is a tuple containing validation set `X` and `y`, automatically triggers loss display during fitting.
+  - `alpha, optional, (default=1e-1)` is learning rate for gradient update. 
+  - `decay, optional, (default=0.99)` is the decay rate for gradient update.
+  - `max_epoch, optional, (default=100)` is the epoch limit for running SGD.
+  - `batch_size, optional, (default=32)` is the batch size of batch gradient descent.
+- `predict(self, X)`, predicts labels given dataset `X`.
+  - `X` is numpy array of shape [ n_samples x n_features ].
+- `_predict_prob(self, X)`, predicts probabilities associated with each label given dataset `X`.
+  - `X` is numpy array of shape [ n_samples x n_features ].
+
 
 ## Sample Use
+***
 Run sample_test.ipynb for a quick demo and comparing the results from naive bayes and multi-class logistic regression.  
 An example use code snippet is shown below.
 ```python
 ...
-forest = RandomForest()
-forest.fit(X_train, y_train)
-y_pred = forest.predict(X_test)
-print("Accuracy = %f" % sum(y_test != y_pred)/len(y_test))
+bayes_model = NaiveBayes()
+bayes_model.fit(X_train, y_train)
+y_pred = bayes_model.predict(X_test)
+print("Naive Bayes Accuracy = %f" % sum(y_test != y_pred)/len(y_test))
+
+logistic_model = MulticlassLogistic()
+logistic_model.fit(X_train, y_train)
+y_pred = logistic_model.predict(X_test)
+print("Logistic Regression Accuracy = %f" % sum(y_test != y_pred)/len(y_test))
 ```
