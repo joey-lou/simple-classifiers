@@ -26,6 +26,17 @@ class LogisticBase(ABC):
                 y (numpy int array): class label of each sample, shape [n].
         """
 
+    @abstractmethod
+    def _predict_prob(self, X):
+        """Predict probability of getting assigned to each class label given X. 
+
+            Args:
+                X (numpy float array): input feature matrix X, shape [n x d].
+
+            Returns:
+                y_prob (numpy float array): probability of each class label for each sample, shape [n x k].
+        """
+
     def _check_Xy(self, X, y):
         """Check input data pair X and y and convert to numpy objects.
 
@@ -85,7 +96,7 @@ class LogisticBase(ABC):
 
 
 class BinaryLogistic(LogisticBase):
-    """Binary logistic model for classification problems
+    """Binary logistic model for classification problems.
     """
 
     def __init__(self):
@@ -159,6 +170,9 @@ class BinaryLogistic(LogisticBase):
 
 
 class MultiNomialLogsitic(LogisticBase):
+    """Multinomial logistic model for classification problems.
+    """
+
     def __init__(self):
         self._w = None
         self._b = None
@@ -230,6 +244,9 @@ class MultiNomialLogsitic(LogisticBase):
 
 
 class OvrLogistic(LogisticBase):
+    """One-over-rest logistic model for classification problems.
+    """
+
     def __init__(self,):
         self._models = []
         self.__fit = False
@@ -253,8 +270,6 @@ class OvrLogistic(LogisticBase):
         self.__fit = True
 
     def _predict_prob(self, X):
-        """ Generate 
-        """
         assert self.__fit, "No training data fitted yet"
         y_probs = []
         for i, class_ in enumerate(self._class):
@@ -268,6 +283,9 @@ class OvrLogistic(LogisticBase):
 
 
 class MulticlassLogistic:
+    """Umberalla class for all logistic models.
+    """
+
     def __new__(self, scheme="multinomial"):
         if scheme == "multinomial":
             return MultiNomialLogsitic()

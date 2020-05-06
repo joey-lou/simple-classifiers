@@ -49,6 +49,8 @@ class regression.MulticlassLogisitc(scheme="multinomial"):
   - `decay, optional, (default=0.99)` is the decay rate for gradient update.
   - `max_epoch, optional, (default=100)` is the epoch limit for running SGD.
   - `batch_size, optional, (default=32)` is the batch size of batch gradient descent.
+  - `epsilon, optional, (default=1e-8)` is the smallest admissable delta in loss, anything smaller will trigger early stop.
+  - `flag, optional, (default=0)` set to `1` for training loss display during fitting.
 - `predict(self, X)`, predicts labels given dataset `X`.
   - `X` is numpy array of shape [ n_samples x n_features ].
 - `_predict_prob(self, X)`, predicts probabilities associated with each label given dataset `X`.
