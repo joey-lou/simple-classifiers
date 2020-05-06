@@ -3,13 +3,11 @@
 Another implementation exercise on writing common ML packages. Here I implmented two commonly used classifiers, namely naive bayes and logistic regression for multi-class classification problems.
 
 ## Set-up
-***
 To use this package, only numpy is required. If not installed run: `pip install numpy` in terminal.
 
 To run comparisons with Scikit-learn in sample_test.ipynb, the corresponding package is required. If not yet installed, run `pip install -U scikit-learn` in terminal.
 
 ## How-to-use 
-***
 
 ### Naive Bayes
 The interfaces is shown as follows: 
@@ -29,7 +27,7 @@ class naivebayes.NaiveBayes(model="gaussian", epsilon=1e-8):
   - `X` is numpy array of shape [ n_samples x n_features ].
 - `_predict_prob(self, X)`, predicts probabilities associated with each label given dataset `X`.
   - `X` is numpy array of shape [ n_samples x n_features ].
-
+*** 
 ### Logistic Regression
 Binary logistic regression uses cross entroy loss and is solved iteratively via stochastic gradient descent.
 Multi-class can use either `ovr` or `multinomial`.
@@ -58,7 +56,6 @@ class regression.MulticlassLogisitc(scheme="multinomial"):
 
 
 ## Sample Use
-***
 Run sample_test.ipynb for a quick demo and comparing the results from naive bayes and multi-class logistic regression.  
 An example use code snippet is shown below.
 ```python
