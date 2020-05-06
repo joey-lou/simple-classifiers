@@ -58,7 +58,7 @@ class regression.MulticlassLogisitc(scheme="multinomial"):
 
 
 ## Sample Use
-Run sample_test.ipynb for a quick demo and comparing the results from naive bayes and multi-class logistic regression.  
+Run `sample_test.ipynb` for a quick demo and comparing the results from naive bayes and multi-class logistic regression.  
 An example use code snippet is shown below.
 ```python
 ...
@@ -73,7 +73,11 @@ y_pred = logistic_model.predict(X_test)
 print("Logistic Regression Accuracy = %f" % sum(y_test != y_pred)/len(y_test))
 ```
 
-Example code also includes image generations to visualize class distributions as shown below:
+`sample_test.ipynb` also includes a simple call to contourplot for visualization:
+```python
+def contour_plot(model, X_train, y_train, box=[-5, 15]):
+```
+
 <div>
 <img src=data/gaussian_log_multi.png width="500"/>
 </div>
