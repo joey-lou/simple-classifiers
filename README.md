@@ -72,3 +72,8 @@ logistic_model.fit(X_train, y_train)
 y_pred = logistic_model.predict(X_test)
 print("Logistic Regression Accuracy = %f" % sum(y_test != y_pred)/len(y_test))
 ```
+
+Example code also includes image generations to visualize class distributions as shown below:
+<div>
+<img src=data/gaussian_log_multi.png width="500"/>
+</div>
